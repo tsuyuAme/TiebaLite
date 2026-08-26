@@ -8,27 +8,18 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.Icon
-import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.pullrefresh.PullRefreshIndicator
 import androidx.compose.material.pullrefresh.pullRefresh
 import androidx.compose.material.pullrefresh.rememberPullRefreshState
@@ -107,10 +98,6 @@ fun PersonalizedPage(
     val error by viewModel.uiState.collectPartialAsState(
         prop1 = PersonalizedUiState::error,
         initial = null
-    )
-    val refreshPosition by viewModel.uiState.collectPartialAsState(
-        prop1 = PersonalizedUiState::refreshPosition,
-        initial = 0
     )
     val hiddenThreadIds by viewModel.uiState.collectPartialAsState(
         prop1 = PersonalizedUiState::hiddenThreadIds,
@@ -192,7 +179,6 @@ fun PersonalizedPage(
                 FeedList(
                     state = lazyListState,
                     dataProvider = { data },
-                    refreshPositionProvider = { refreshPosition },
                     hiddenThreadIdsProvider = { hiddenThreadIds },
                     onItemClick = {
                         navigator.navigate(
@@ -231,7 +217,6 @@ fun PersonalizedPage(
                             )
                         )
                     },
-                    onRefresh = { viewModel.send(PersonalizedUiIntent.Refresh) },
                     onOpenForum = { navigator.navigate(ForumPageDestination(it)) },
                     onClickUser = { navigator.navigate(UserProfilePageDestination(it.id)) }
                 )
@@ -281,18 +266,15 @@ private fun BoxScope.RefreshTip(refreshCount: Int) {
 private fun FeedList(
     state: LazyListState,
     dataProvider: () -> ImmutableList<ThreadItemData>,
-    refreshPositionProvider: () -> Int,
     hiddenThreadIdsProvider: () -> ImmutableList<Long>,
     onItemClick: (ThreadInfo) -> Unit,
     onItemReplyClick: (ThreadInfo) -> Unit,
     onAgree: (ThreadInfo) -> Unit,
     onDislike: (ThreadInfo, Long, ImmutableList<ImmutableHolder<DislikeReason>>) -> Unit,
-    onRefresh: () -> Unit,
     onOpenForum: (forumName: String) -> Unit = {},
     onClickUser: (User) -> Unit = {},
 ) {
     val data = dataProvider()
-    val refreshPosition = refreshPositionProvider()
     val hiddenThreadIds = hiddenThreadIdsProvider()
 
     MyLazyColumn(
@@ -318,14 +300,11 @@ private fun FeedList(
                     item,
                     hidden
                 ) { hiddenThreadIds.contains(item.get { threadId }) || hidden }
-            val isRefreshPosition =
-                remember(index, refreshPosition) { index + 1 == refreshPosition }
             val isNotLast = remember(index, data.size) { index < data.size - 1 }
             val showDivider = remember(
                 isHidden,
-                isRefreshPosition,
                 isNotLast
-            ) { !isHidden && !isRefreshPosition && isNotLast }
+            ) { !isHidden && isNotLast }
             Container {
                 AnimatedVisibility(
                     visible = !isHidden,
@@ -370,36 +349,9 @@ private fun FeedList(
                                 }
                             }
                         }
-                        if (isRefreshPosition) {
-                            RefreshTip(onRefresh)
-                        }
                     }
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun RefreshTip(
-    onRefresh: () -> Unit
-) {
-    Row(
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onRefresh)
-            .padding(8.dp),
-    ) {
-        Icon(
-            imageVector = Icons.Rounded.Refresh,
-            contentDescription = null
-        )
-        Spacer(modifier = Modifier.width(16.dp))
-        Text(
-            text = stringResource(id = R.string.tip_refresh),
-            style = MaterialTheme.typography.subtitle1
-        )
     }
 }

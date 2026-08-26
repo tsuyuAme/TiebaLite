@@ -288,16 +288,13 @@ sealed interface PersonalizedPartialChange : PartialChange<PersonalizedUiState> 
         override fun reduce(oldState: PersonalizedUiState): PersonalizedUiState =
             when (this) {
                 Start -> oldState.copy(isRefreshing = true)
-                is Success -> {
-                    val oldSize = oldState.data.size
-                    val newData = (data + oldState.data).distinctById()
-                    oldState.copy(
-                        isRefreshing = false,
-                        currentPage = 1,
-                        data = newData,
-                        refreshPosition = if (oldState.data.isEmpty()) 0 else (newData.size - oldSize),
-                    )
-                }
+                is Success -> oldState.copy(
+                    isRefreshing = false,
+                    currentPage = 1,
+                    data = data.distinctById(),
+                    refreshPosition = 0,
+                    hiddenThreadIds = persistentListOf(),
+                )
 
                 is Failure -> oldState.copy(
                     isRefreshing = false,
