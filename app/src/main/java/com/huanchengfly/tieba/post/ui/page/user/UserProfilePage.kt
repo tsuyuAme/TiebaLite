@@ -144,6 +144,10 @@ import kotlin.math.min
 fun UserProfilePage(
     uid: Long,
     navigator: DestinationsNavigator,
+    /**
+     * 初始页签：threads=主题, posts=回帖, concern_forums=关注的吧
+     */
+    initialTab: String = "threads",
     viewModel: UserProfileViewModel = pageViewModel(),
 ) {
     val account = LocalAccount.current
@@ -636,7 +640,10 @@ private fun UserProfileContentNormal(
                             ),
                         ).toImmutableList()
                     }
-                    val pagerState = rememberPagerState { pages.size }
+                    val initialPageIndex = remember(pages, initialTab) {
+                        pages.indexOfFirst { it.id == initialTab }.let { if (it >= 0) it else 0 }
+                    }
+                    val pagerState = rememberPagerState(initialPage = initialPageIndex) { pages.size }
 
                     val containerHeight by remember {
                         derivedStateOf {
@@ -802,7 +809,10 @@ private fun UserProfileContentExpanded(
                             ),
                         ).toImmutableList()
                     }
-                    val pagerState = rememberPagerState { pages.size }
+                    val initialPageIndex = remember(pages, initialTab) {
+                        pages.indexOfFirst { it.id == initialTab }.let { if (it >= 0) it else 0 }
+                    }
+                    val pagerState = rememberPagerState(initialPage = initialPageIndex) { pages.size }
 
                     UserProfileDetail(
                         user = user,
