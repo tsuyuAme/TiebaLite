@@ -99,7 +99,8 @@ private fun StatCardPlaceholder(modifier: Modifier = Modifier) {
 private fun StatCard(
     account: Account,
     modifier: Modifier = Modifier,
-    onFollowClick: (() -> Unit)? = null
+    onFollowClick: (() -> Unit)? = null,
+    onPostClick: (() -> Unit)? = null,
 ) {
     val postNum by animateIntAsState(targetValue = account.postNum?.toIntOrNull() ?: 0)
     val fansNum by animateIntAsState(targetValue = account.fansNum?.toIntOrNull() ?: 0)
@@ -125,7 +126,12 @@ private fun StatCard(
         HorizontalDivider(color = Color(if (ExtendedTheme.colors.isNightMode) 0xFF808080 else 0xFFDEDEDE))
         StatCardItem(
             statNum = postNum,
-            statText = stringResource(id = R.string.title_stat_posts_num)
+            statText = stringResource(id = R.string.title_stat_posts_num),
+            modifier = if (onPostClick != null) {
+                Modifier.clickable(onClick = onPostClick)
+            } else {
+                Modifier
+            }
         )
     }
 }
@@ -311,7 +317,16 @@ fun UserPage(
                             .padding(vertical = 18.dp),
                         onFollowClick = {
                             navigator.navigate(FollowListPageDestination())
-                        }
+                        },
+                        onPostClick = {
+                            // 直接打开个人主页「回帖」页签
+                            navigator.navigate(
+                                UserProfilePageDestination(
+                                    account!!.uid.toLong(),
+                                    initialTab = "posts",
+                                )
+                            )
+                        },
                     )
                 } else if (isLoading) {
                     InfoCard(
