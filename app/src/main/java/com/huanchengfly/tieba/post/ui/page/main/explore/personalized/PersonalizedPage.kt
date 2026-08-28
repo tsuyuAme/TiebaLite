@@ -31,6 +31,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -107,7 +108,19 @@ fun PersonalizedPage(
         refreshing = isRefreshing,
         onRefresh = { viewModel.send(PersonalizedUiIntent.Refresh) }
     )
-    val lazyListState = rememberLazyListState()
+    val lazyListState = rememberLazyListState(
+        initialFirstVisibleItemIndex = viewModel.scrollIndex,
+        initialFirstVisibleItemScrollOffset = viewModel.scrollOffset,
+    )
+    // 持续把滚动位置写回 ViewModel，切走再回来时恢复
+    LaunchedEffect(lazyListState) {
+        snapshotFlow {
+            lazyListState.firstVisibleItemIndex to lazyListState.firstVisibleItemScrollOffset
+        }.collect { (index, offset) ->
+            viewModel.scrollIndex = index
+            viewModel.scrollOffset = offset
+        }
+    }
     viewModel.bindScrollToTopEvent(lazyListState = lazyListState)
     val isEmpty by remember {
         derivedStateOf {
@@ -140,6 +153,8 @@ fun PersonalizedPage(
         LaunchedEffect(data) {
             launch {
                 delay(20)
+                viewModel.scrollIndex = 0
+                viewModel.scrollOffset = 0
                 lazyListState.scrollToItem(0, 0)
             }
             delay(2000)

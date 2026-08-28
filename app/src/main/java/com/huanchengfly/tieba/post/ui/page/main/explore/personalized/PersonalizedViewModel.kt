@@ -42,6 +42,10 @@ import javax.inject.Inject
 @HiltViewModel
 class PersonalizedViewModel @Inject constructor() :
     BaseViewModel<PersonalizedUiIntent, PersonalizedPartialChange, PersonalizedUiState, PersonalizedUiEvent>() {
+    /** 记住推荐列表滚动位置，避免切 Tab / 进详情返回后回到顶部 */
+    var scrollIndex: Int = 0
+    var scrollOffset: Int = 0
+
     override fun createInitialState(): PersonalizedUiState = PersonalizedUiState()
 
     override fun createPartialChangeProducer(): PartialChangeProducer<PersonalizedUiIntent, PersonalizedPartialChange, PersonalizedUiState> =
